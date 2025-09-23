@@ -15,6 +15,12 @@ A CLI tool for managing scripts and tasks on your NAS system.
 
 ## Installation
 
+### Quick Install
+```bash
+curl -fsSL https://raw.githubusercontent.com/SlashGordon/scripts/main/install.sh | sh
+```
+
+### Manual Install
 Download the appropriate binary for your system from the releases page.
 
 ## Configuration
