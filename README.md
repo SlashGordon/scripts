@@ -1,5 +1,10 @@
 # NAS Manager
 
+[![CI](https://github.com/SlashGordon/scripts/actions/workflows/ci.yml/badge.svg)](https://github.com/SlashGordon/scripts/actions/workflows/ci.yml)
+[![Release](https://github.com/SlashGordon/scripts/actions/workflows/release.yml/badge.svg)](https://github.com/SlashGordon/scripts/actions/workflows/release.yml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/SlashGordon/scripts)](https://goreportcard.com/report/github.com/SlashGordon/scripts)
+[![Latest Release](https://img.shields.io/github/v/release/SlashGordon/scripts)](https://github.com/SlashGordon/scripts/releases/latest)
+
 A CLI tool for managing scripts and tasks on your NAS system.
 
 ## Features
