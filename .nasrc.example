@@ -1,0 +1,13 @@
+# Cloudflare API credentials
+CF_API_TOKEN=your_cloudflare_api_token
+CF_ZONE_ID=your_zone_id
+
+# DDNS configuration
+CF_RECORD_NAME=nas.slash.de
+DDNS_LOG_FILE=/var/log/cloudflare-ddns.log
+DDNS_CACHE_FILE=/var/services/homes/admin/.cloudflare-ddns.cache
+
+# ACME configuration
+ACME_DOMAIN=internal.slash.de
+ACME_CERT_PATH=/usr/syno/etc/certificate/system/default
+ACME_EMAIL=your@email.com

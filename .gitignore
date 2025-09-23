@@ -1,0 +1,18 @@
+# Binaries
+bin/
+
+# Configuration files
+.nasrc
+
+# Certificates
+cert/
+
+# Go build cache
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
