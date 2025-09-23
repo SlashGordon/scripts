@@ -9,8 +9,7 @@ A CLI tool for managing scripts and tasks on your NAS system.
 
 ## Features
 
-- **Script Management**: Run and list shell/Python scripts
-- **Task Management**: Monitor system status and processes  
+- **DDNS Management**: Update Cloudflare DNS records with current public IP
 - **ACME Certificates**: Issue/renew Let's Encrypt certificates via Cloudflare DNS
 
 ## Installation
@@ -46,23 +45,21 @@ NAS_CONFIG=/path/to/config nas-manager ddns update
 Required environment variables:
 - `CF_API_TOKEN` - Cloudflare API token (used for both DDNS and ACME)
 - `CF_ZONE_ID` - Cloudflare zone ID (for DDNS)
+- `CF_RECORD_NAME` - DNS record name to update
+- `ACME_DOMAIN` - Domain for certificate
+- `ACME_EMAIL` - Email for Let's Encrypt registration
 
 ## Usage
 
 ```bash
 # Show help
-./nas-manager --help
+nas-manager --help
 
-# Script commands
-./nas-manager script run /path/to/script.sh
-./nas-manager script list /scripts/directory
-
-# Task commands  
-./nas-manager task status
-./nas-manager task ps nginx
+# DDNS commands
+nas-manager ddns update
 
 # ACME certificate management
-./nas-manager acme issue
+nas-manager acme issue
 ```
 
 ## Building
