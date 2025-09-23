@@ -8,6 +8,8 @@ on:
 jobs:
   release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
     - uses: actions/checkout@v4
     
@@ -15,12 +17,18 @@ jobs:
       uses: actions/setup-go@v5
       with:
         go-version: '1.21'
+        cache: true
     
     - name: Download dependencies
-      run: go mod tidy
+      run: go mod download
     
-    - name: Build binaries
-      run: make build-all
+    - name: Build binaries in parallel
+      run: |
+        make build-linux-amd64 &
+        make build-linux-arm64 &
+        make build-darwin-amd64 &
+        make build-darwin-arm64 &
+        wait
     
     - name: Create Release
       uses: softprops/action-gh-release@v2
