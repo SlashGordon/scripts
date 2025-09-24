@@ -59,7 +59,7 @@ func TestUpdateBinaryAlreadyLatest(t *testing.T) {
 
 func TestUpdateBinaryPlatformDetection(t *testing.T) {
 	expectedBinaryName := "nas-manager-" + runtime.GOOS + "-" + runtime.GOARCH
-	
+
 	// Mock release with multiple assets
 	release := GitHubRelease{
 		TagName: "v1.1.0",
@@ -95,9 +95,9 @@ func TestUpdateBinaryPlatformDetection(t *testing.T) {
 
 	// This test will pass if the current platform has a corresponding asset
 	// or skip if the platform isn't in our mock data
-	if expectedBinaryName == "nas-manager-linux-amd64" || 
-	   expectedBinaryName == "nas-manager-darwin-amd64" || 
-	   expectedBinaryName == "nas-manager-windows-amd64" {
+	if expectedBinaryName == "nas-manager-linux-amd64" ||
+		expectedBinaryName == "nas-manager-darwin-amd64" ||
+		expectedBinaryName == "nas-manager-windows-amd64" {
 		if !foundAsset {
 			t.Errorf("Expected to find asset for platform %s", expectedBinaryName)
 		}
@@ -141,7 +141,7 @@ func TestGitHubReleaseStruct(t *testing.T) {
 func TestUpdateCommandRegistration(t *testing.T) {
 	// Test that update command is only registered for non-dev versions
 	originalVersion := Version
-	
+
 	// Test with dev version - command should not be registered
 	Version = "dev"
 	// We can't easily test command registration without refactoring,
@@ -149,12 +149,12 @@ func TestUpdateCommandRegistration(t *testing.T) {
 	if !strings.Contains(Version, "dev") {
 		t.Error("Expected dev version to contain 'dev'")
 	}
-	
+
 	// Test with release version
 	Version = "v1.0.0"
 	if strings.Contains(Version, "dev") {
 		t.Error("Expected release version to not contain 'dev'")
 	}
-	
+
 	Version = originalVersion
 }

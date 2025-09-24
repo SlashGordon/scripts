@@ -4,7 +4,7 @@ COMMIT=$(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 BUILD_TIME=$(shell date -u '+%Y-%m-%d_%H:%M:%S')
 LDFLAGS=-ldflags "-X github.com/SlashGordon/scripts/cmd.Version=${VERSION} -X github.com/SlashGordon/scripts/cmd.Commit=${COMMIT} -X github.com/SlashGordon/scripts/cmd.Date=${BUILD_TIME}"
 
-.PHONY: build clean release
+.PHONY: build clean release lint test fmt vet
 
 build:
 	go build ${LDFLAGS} -o bin/${BINARY_NAME} .
@@ -29,3 +29,20 @@ clean:
 release: clean build-all
 	@echo "Built binaries:"
 	@ls -la bin/
+
+# Go Report Card improvements
+fmt:
+	go fmt ./...
+
+vet:
+	go vet ./...
+
+test:
+	go test -v ./...
+
+lint:
+	@which golangci-lint > /dev/null || (echo "Installing golangci-lint..." && go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest)
+	golangci-lint run
+
+check: fmt vet test lint
+	@echo "All checks passed!"

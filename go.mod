@@ -1,4 +1,4 @@
-module nas-manager
+module github.com/SlashGordon/scripts
 
 go 1.24.0
 

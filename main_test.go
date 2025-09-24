@@ -12,7 +12,7 @@ func TestMain(t *testing.T) {
 			t.Errorf("main() panicked: %v", r)
 		}
 	}()
-	
+
 	// We can't actually call main() as it would execute the CLI
 	// So we just test that the package compiles
 	t.Log("Main package compiles successfully")

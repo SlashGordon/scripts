@@ -1,3 +1,5 @@
+// Package cmd provides the command-line interface for nas-manager.
+// It includes commands for DDNS management and ACME certificate operations.
 package cmd
 
 import (

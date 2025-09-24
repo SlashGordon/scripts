@@ -12,8 +12,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-acme/lego/v4/certificate"
 	"github.com/go-acme/lego/v4/certcrypto"
+	"github.com/go-acme/lego/v4/certificate"
 	"github.com/go-acme/lego/v4/lego"
 	"github.com/go-acme/lego/v4/providers/dns/cloudflare"
 	"github.com/go-acme/lego/v4/registration"
@@ -31,19 +31,19 @@ var issueCmd = &cobra.Command{
 	Short: "Issue/renew certificate",
 	Run: func(cmd *cobra.Command, args []string) {
 		config := getAcmeConfig()
-		
+
 		if config.CFToken == "" || config.Domain == "" || config.Email == "" {
 			fmt.Println("Error: CF_API_TOKEN, ACME_DOMAIN, and ACME_EMAIL environment variables are required")
 			os.Exit(1)
 		}
-		
+
 		fmt.Printf("Issuing certificate for domain: %s\n", config.Domain)
-		
+
 		if err := issueCertificate(config); err != nil {
 			fmt.Printf("Certificate issue failed: %v\n", err)
 			os.Exit(1)
 		}
-		
+
 		fmt.Printf("Certificate for %s issued successfully.\n", config.Domain)
 	},
 }
@@ -69,47 +69,47 @@ func issueCertificate(config AcmeConfig) error {
 	if err != nil {
 		return err
 	}
-	
+
 	user := &User{
 		Email: config.Email,
 		key:   privateKey,
 	}
-	
+
 	legoConfig := lego.NewConfig(user)
 	legoConfig.Certificate.KeyType = certcrypto.EC256
-	
+
 	client, err := lego.NewClient(legoConfig)
 	if err != nil {
 		return err
 	}
-	
+
 	os.Setenv("CLOUDFLARE_DNS_API_TOKEN", config.CFToken)
 	provider, err := cloudflare.NewDNSProvider()
 	if err != nil {
 		return err
 	}
-	
+
 	client.Challenge.SetDNS01Provider(provider)
-	
+
 	reg, err := client.Registration.Register(registration.RegisterOptions{TermsOfServiceAgreed: true})
 	if err != nil {
 		return err
 	}
 	user.Registration = reg
-	
+
 	request := certificate.ObtainRequest{
 		Domains: []string{config.Domain},
 		Bundle:  true,
 	}
-	
+
 	certs, err := client.Certificate.Obtain(request)
 	if err != nil {
 		return err
 	}
-	
+
 	certPath := config.CertPath
 	usingFallback := false
-	
+
 	// Try to create directory and test write permissions
 	if err := os.MkdirAll(certPath, 0755); err != nil {
 		usingFallback = true
@@ -122,7 +122,7 @@ func issueCertificate(config AcmeConfig) error {
 			os.Remove(testFile)
 		}
 	}
-	
+
 	if usingFallback {
 		dateStr := time.Now().Format("2006-01-02")
 		domainSafe := strings.ReplaceAll(config.Domain, ".", "_")
@@ -132,17 +132,17 @@ func issueCertificate(config AcmeConfig) error {
 			return fmt.Errorf("failed to create fallback directory: %v", err)
 		}
 	}
-	
+
 	// Write certificates
 	files := map[string][]byte{
 		config.Domain + ".key": certs.PrivateKey,
 		config.Domain + ".cer": certs.Certificate,
 		"fullchain.cer":        certs.Certificate,
-		"ca.cer":              certs.IssuerCertificate,
-		"privkey.pem":         certs.PrivateKey,
-		"fullchain.pem":       certs.Certificate,
+		"ca.cer":               certs.IssuerCertificate,
+		"privkey.pem":          certs.PrivateKey,
+		"fullchain.pem":        certs.Certificate,
 	}
-	
+
 	for filename, content := range files {
 		perm := os.FileMode(0644)
 		if filepath.Ext(filename) == ".key" || filename == "privkey.pem" {
@@ -152,7 +152,7 @@ func issueCertificate(config AcmeConfig) error {
 			return fmt.Errorf("failed to write %s: %v", filename, err)
 		}
 	}
-	
+
 	if usingFallback {
 		fmt.Printf("Certificates saved to fallback directory: %s\n", certPath)
 		fmt.Printf("Please manually copy certificates to: %s\n", config.CertPath)
@@ -160,7 +160,7 @@ func issueCertificate(config AcmeConfig) error {
 	} else {
 		exec.Command("/usr/syno/sbin/synoservicectl", "--reload", "nginx").Run()
 	}
-	
+
 	return nil
 }
 

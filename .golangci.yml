@@ -1,0 +1,32 @@
+run:
+  timeout: 5m
+  modules-download-mode: readonly
+
+linters-settings:
+  gofmt:
+    simplify: true
+  goimports:
+    local-prefixes: github.com/SlashGordon/scripts
+  govet:
+    check-shadowing: true
+  misspell:
+    locale: US
+
+linters:
+  enable:
+    - gofmt
+    - goimports
+    - govet
+    - misspell
+    - ineffassign
+    - unused
+    - errcheck
+    - gosimple
+    - staticcheck
+  disable:
+    - typecheck # Can be problematic with build constraints
+
+issues:
+  exclude-use-default: false
+  max-issues-per-linter: 0
+  max-same-issues: 0
