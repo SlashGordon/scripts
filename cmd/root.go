@@ -9,8 +9,8 @@ import (
 
 var rootCmd = &cobra.Command{
 	Use:   "nas-manager",
-	Short: "NAS script and task management tool",
-	Long:  "A CLI tool for managing scripts and tasks on your NAS system",
+	Short: "CLI tool for DDNS and certificate management",
+	Long:  "A CLI tool for DDNS and certificate management.\n\nFeatures:\n- DDNS Management: Update Cloudflare DNS records with current public IP\n- ACME Certificates: Issue/renew Let's Encrypt certificates via Cloudflare DNS",
 }
 
 func Execute() {

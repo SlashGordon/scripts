@@ -9,6 +9,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
+	"time"
 
 	"github.com/go-acme/lego/v4/certificate"
 	"github.com/go-acme/lego/v4/certcrypto"
@@ -105,40 +107,59 @@ func issueCertificate(config AcmeConfig) error {
 		return err
 	}
 	
-	if err := os.MkdirAll(config.CertPath, 0755); err != nil {
-		return err
+	certPath := config.CertPath
+	usingFallback := false
+	
+	// Try to create directory and test write permissions
+	if err := os.MkdirAll(certPath, 0755); err != nil {
+		usingFallback = true
+	} else {
+		// Test write permissions by creating a temporary file
+		testFile := filepath.Join(certPath, ".write_test")
+		if err := os.WriteFile(testFile, []byte("test"), 0644); err != nil {
+			usingFallback = true
+		} else {
+			os.Remove(testFile)
+		}
 	}
 	
-	// Write private key
-	if err := os.WriteFile(filepath.Join(config.CertPath, config.Domain+".key"), certs.PrivateKey, 0600); err != nil {
-		return err
+	if usingFallback {
+		dateStr := time.Now().Format("2006-01-02")
+		domainSafe := strings.ReplaceAll(config.Domain, ".", "_")
+		certPath = fmt.Sprintf("./certs/%s-%s", domainSafe, dateStr)
+		fmt.Printf("Permission denied for %s, using fallback directory: %s\n", config.CertPath, certPath)
+		if err := os.MkdirAll(certPath, 0755); err != nil {
+			return fmt.Errorf("failed to create fallback directory: %v", err)
+		}
 	}
 	
-	// Write certificate
-	if err := os.WriteFile(filepath.Join(config.CertPath, config.Domain+".cer"), certs.Certificate, 0644); err != nil {
-		return err
+	// Write certificates
+	files := map[string][]byte{
+		config.Domain + ".key": certs.PrivateKey,
+		config.Domain + ".cer": certs.Certificate,
+		"fullchain.cer":        certs.Certificate,
+		"ca.cer":              certs.IssuerCertificate,
+		"privkey.pem":         certs.PrivateKey,
+		"fullchain.pem":       certs.Certificate,
 	}
 	
-	// Write fullchain
-	if err := os.WriteFile(filepath.Join(config.CertPath, "fullchain.cer"), certs.Certificate, 0644); err != nil {
-		return err
+	for filename, content := range files {
+		perm := os.FileMode(0644)
+		if filepath.Ext(filename) == ".key" || filename == "privkey.pem" {
+			perm = 0600
+		}
+		if err := os.WriteFile(filepath.Join(certPath, filename), content, perm); err != nil {
+			return fmt.Errorf("failed to write %s: %v", filename, err)
+		}
 	}
 	
-	// Write CA certificate
-	if err := os.WriteFile(filepath.Join(config.CertPath, "ca.cer"), certs.IssuerCertificate, 0644); err != nil {
-		return err
+	if usingFallback {
+		fmt.Printf("Certificates saved to fallback directory: %s\n", certPath)
+		fmt.Printf("Please manually copy certificates to: %s\n", config.CertPath)
+		fmt.Printf("Run: sudo cp %s/* %s/\n", certPath, config.CertPath)
+	} else {
+		exec.Command("/usr/syno/sbin/synoservicectl", "--reload", "nginx").Run()
 	}
-	
-	// Write legacy format files for compatibility
-	if err := os.WriteFile(filepath.Join(config.CertPath, "privkey.pem"), certs.PrivateKey, 0600); err != nil {
-		return err
-	}
-	
-	if err := os.WriteFile(filepath.Join(config.CertPath, "fullchain.pem"), certs.Certificate, 0644); err != nil {
-		return err
-	}
-	
-	exec.Command("/usr/syno/sbin/synoservicectl", "--reload", "nginx").Run()
 	
 	return nil
 }
