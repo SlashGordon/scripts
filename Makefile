@@ -1,7 +1,8 @@
 BINARY_NAME=nas-manager
-VERSION=$(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
+VERSION=$(shell git describe --tags --abbrev=0 2>/dev/null || echo "dev")
+COMMIT=$(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 BUILD_TIME=$(shell date -u '+%Y-%m-%d_%H:%M:%S')
-LDFLAGS=-ldflags "-X main.Version=${VERSION} -X main.BuildTime=${BUILD_TIME}"
+LDFLAGS=-ldflags "-X github.com/SlashGordon/scripts/cmd.Version=${VERSION} -X github.com/SlashGordon/scripts/cmd.Commit=${COMMIT} -X github.com/SlashGordon/scripts/cmd.Date=${BUILD_TIME}"
 
 .PHONY: build clean release
 

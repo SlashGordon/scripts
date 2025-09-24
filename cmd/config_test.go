@@ -48,6 +48,7 @@ func TestGetAcmeConfig(t *testing.T) {
 	os.Setenv("CF_API_TOKEN", "test_token")
 	os.Setenv("ACME_DOMAIN", "test.example.com")
 	os.Setenv("ACME_EMAIL", "test@example.com")
+	os.Setenv("ACME_CERT_PATH", "/custom/cert/path")
 	
 	config := getAcmeConfig()
 	
@@ -60,8 +61,21 @@ func TestGetAcmeConfig(t *testing.T) {
 	if config.Email != "test@example.com" {
 		t.Errorf("Expected 'test@example.com', got '%s'", config.Email)
 	}
+	if config.CertPath != "/custom/cert/path" {
+		t.Errorf("Expected '/custom/cert/path', got '%s'", config.CertPath)
+	}
 	
 	os.Unsetenv("CF_API_TOKEN")
 	os.Unsetenv("ACME_DOMAIN")
 	os.Unsetenv("ACME_EMAIL")
+	os.Unsetenv("ACME_CERT_PATH")
+}
+
+func TestGetAcmeConfigDefaults(t *testing.T) {
+	// Test default values when env vars are not set
+	config := getAcmeConfig()
+	
+	if config.CertPath != "./cert" {
+		t.Errorf("Expected default cert path './cert', got '%s'", config.CertPath)
+	}
 }
