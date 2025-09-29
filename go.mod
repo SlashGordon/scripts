@@ -1,4 +1,4 @@
-module github.com/SlashGordon/scripts
+module github.com/SlashGordon/nas-manager
 
 go 1.24.0
 
@@ -12,6 +12,7 @@ require (
 	github.com/go-jose/go-jose/v4 v4.1.2 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/miekg/dns v1.1.68 // indirect
+	github.com/spf13/afero v1.15.0 // indirect
 	github.com/spf13/pflag v1.0.9 // indirect
 	golang.org/x/crypto v0.42.0 // indirect
 	golang.org/x/mod v0.27.0 // indirect
