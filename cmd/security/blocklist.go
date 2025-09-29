@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/SlashGordon/nas-manager/internal"
+	"github.com/SlashGordon/nas-manager/internal/blocklist"
 	"github.com/SlashGordon/nas-manager/internal/constants"
 	"github.com/SlashGordon/nas-manager/internal/fs"
 	"github.com/SlashGordon/nas-manager/internal/http"
@@ -317,35 +318,10 @@ func ExtractAndMergeIPs(lists []Blocklist, filterCloudflare bool, filterLocal bo
 				continue
 			}
 
-			// Special handling for Tor exit addresses format
-			if list.Name == "tor_exits" {
-				if strings.HasPrefix(line, "ExitAddress ") {
-					const minTorFields = 2
-					parts := strings.Fields(line)
-					if len(parts) >= minTorFields {
-						line = parts[1]
-					} else {
-						continue
-					}
-				} else {
-					continue
-				}
-			}
-
-			// Validate and optionally filter IPs/CIDRs
-			cleaned := strings.TrimSpace(line)
-			if cleaned == "" {
+			// Parse line using regex patterns
+			cleaned := blocklist.ParseLine(line, list.Name)
+			if cleaned == "" || !blocklist.ValidateIP(cleaned) {
 				continue
-			}
-			// Accept both single IPs and CIDR ranges
-			if strings.Contains(cleaned, "/") {
-				if _, _, err := net.ParseCIDR(cleaned); err != nil {
-					continue
-				}
-			} else {
-				if net.ParseIP(cleaned) == nil {
-					continue
-				}
 			}
 
 			// Filter Cloudflare ranges

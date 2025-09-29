@@ -60,7 +60,6 @@ const ChoiceTrust = "trust"
 // SynoCertificatePath is the default path to the Synology system certificate
 const SynoCertificatePath = "/usr/syno/etc/certificate/system/default/cert.pem"
 
-// Synology-related paths
 // SynoCertDir is the directory containing Synology system certificates
 const SynoCertDir = "/usr/syno/etc/certificate/system/default"
 
@@ -82,6 +81,8 @@ const SynoVolume1Path = "/volume1"
 // SynoAdminHome is the home path for the default admin user
 const SynoAdminHome = "/var/services/homes/admin"
 
-// Cloudflare published IP list URLs
+// CloudflareIPsV4URL published IP list URLs
 const CloudflareIPsV4URL = "https://www.cloudflare.com/ips-v4"
+
+// CloudflareIPsV6URL published IP list URLs
 const CloudflareIPsV6URL = "https://www.cloudflare.com/ips-v6"

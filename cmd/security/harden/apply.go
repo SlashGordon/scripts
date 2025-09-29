@@ -10,81 +10,75 @@ import (
 
 	"github.com/SlashGordon/nas-manager/internal/constants"
 	"github.com/SlashGordon/nas-manager/internal/i18n"
+	"github.com/SlashGordon/nas-manager/internal/utils"
 )
 
+func printLine(out *os.File, format string, args ...any) error {
+	_, err := fmt.Fprintf(out, format+"\n", args...)
+	return err
+}
+
+
+
+// ---------------- DSM ----------------
+
 func ApplyDSMHardening() error {
-	title := i18n.T(i18n.DSMHardeningTitle)
-	if _, err := fmt.Fprintf(os.Stdout, "%s\n", title); err != nil {
-		return err
-	}
-	if _, err := fmt.Fprintf(os.Stdout, "%s\n", strings.Repeat("=", len(title))); err != nil {
-		return err
+	utils.PrintHeader(i18n.T(i18n.DSMHardeningTitle))
+
+	config, err := os.ReadFile(constants.SynoSecurityScanConf)
+	if err != nil {
+		return nil // nothing to do
 	}
 
+	if strings.Contains(string(config), "enable_autoblock=yes") {
+		return printLine(os.Stdout, "%s", i18n.T(i18n.DSMConfigured))
+	}
+
+	return handleDSMConfig(string(config))
+}
+
+func handleDSMConfig(config string) error {
 	trusted := false
-	modified := false
-
-	if content, err := os.ReadFile(constants.SynoSecurityScanConf); err == nil {
-		config := string(content)
-		if !strings.Contains(config, "enable_autoblock=yes") {
-			choice := constants.ChoiceYes
-			if !trusted {
-				choice = PromptUser(i18n.T(i18n.DSMAutoBlock))
-			}
-
-			switch choice {
-			case constants.ChoiceYes:
-				if _, err := fmt.Fprintf(os.Stdout, "Auto-applying: %s\n", i18n.T(i18n.DSMAutoBlock)); err != nil {
-					return err
-				}
-				fallthrough
-			case constants.ChoiceTrust:
-				if choice == constants.ChoiceTrust {
-					if _, err := fmt.Fprintf(os.Stdout, "  %s\n", i18n.T(i18n.TrustingRemaining)); err != nil {
-						return err
-					}
-				}
-
-				newConfig := strings.ReplaceAll(config, "enable_autoblock=no", "enable_autoblock=yes")
-				if err := os.WriteFile(constants.SynoSecurityScanConf, []byte(newConfig), 0600); err == nil {
-					if _, err := fmt.Fprintf(os.Stdout, "%s\n", i18n.T(i18n.DSMAutoBlockEnabled)); err != nil {
-						return err
-					}
-					modified = true
-				} else {
-					if _, err := fmt.Fprintf(os.Stderr, "%s: %v\n", i18n.T(i18n.DSMAutoBlockFailed), err); err != nil {
-						return err
-					}
-				}
-			default:
-				if _, err := fmt.Fprintf(os.Stdout, "%s\n", i18n.T(i18n.DSMAutoBlockSkipped)); err != nil {
-					return err
-				}
-			}
-		} else {
-			if _, err := fmt.Fprintf(os.Stdout, "%s\n", i18n.T(i18n.DSMConfigured)); err != nil {
-				return err
-			}
-		}
+	choice := constants.ChoiceYes
+	if !trusted {
+		choice = PromptUser(i18n.T(i18n.DSMAutoBlock))
 	}
 
-	if modified {
-		if _, err := fmt.Fprintf(os.Stdout, "\n%s\n", i18n.T(i18n.DSMRestart)); err != nil {
+	switch choice {
+	case constants.ChoiceYes:
+		if err := printLine(os.Stdout, "Auto-applying: %s", i18n.T(i18n.DSMAutoBlock)); err != nil {
 			return err
 		}
+		return enableAutoBlock(config)
+
+	case constants.ChoiceTrust:
+		if err := printLine(os.Stdout, "  %s", i18n.T(i18n.TrustingRemaining)); err != nil {
+			return err
+		}
+		return enableAutoBlock(config)
+
+	case constants.ChoiceNo:
+		return printLine(os.Stdout, "%s", i18n.T(i18n.DSMAutoBlockSkipped))
 	}
 
 	return nil
 }
 
+func enableAutoBlock(config string) error {
+	newConfig := strings.ReplaceAll(config, "enable_autoblock=no", "enable_autoblock=yes")
+	if err := os.WriteFile(constants.SynoSecurityScanConf, []byte(newConfig), 0600); err != nil {
+		return printLine(os.Stderr, "%s: %v", i18n.T(i18n.DSMAutoBlockFailed), err)
+	}
+	if err := printLine(os.Stdout, "%s", i18n.T(i18n.DSMAutoBlockEnabled)); err != nil {
+		return err
+	}
+	return printLine(os.Stdout, "\n%s", i18n.T(i18n.DSMRestart))
+}
+
+// ---------------- Services ----------------
+
 func ApplyServiceHardening() error {
-	title := i18n.T(i18n.ServiceHardeningTitle)
-	if _, err := fmt.Fprintf(os.Stdout, "%s\n", title); err != nil {
-		return err
-	}
-	if _, err := fmt.Fprintf(os.Stdout, "%s\n", strings.Repeat("=", len(title))); err != nil {
-		return err
-	}
+	utils.PrintHeader(i18n.T(i18n.ServiceHardeningTitle))
 
 	services := []string{
 		"pkgctl-AudioStation",
@@ -94,53 +88,56 @@ func ApplyServiceHardening() error {
 	}
 
 	trusted := false
-
 	for _, service := range services {
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
-
-		cmd := exec.CommandContext(ctx, "synoservice", "--status", service)
-		if output, err := cmd.Output(); err == nil && strings.Contains(string(output), "start") {
-			name := strings.TrimPrefix(service, "pkgctl-")
-			choice := constants.ChoiceYes
-			if !trusted {
-				choice = PromptUser(fmt.Sprintf("Disable %s service", name))
-			}
-
-			switch choice {
-			case constants.ChoiceYes:
-				if _, err := fmt.Fprintf(os.Stdout, i18n.T(i18n.ServiceDisabling)+"\n", name); err != nil {
-					return err
-				}
-				fallthrough
-			case constants.ChoiceTrust:
-				if choice == constants.ChoiceTrust {
-					if _, err := fmt.Fprintf(os.Stdout, "  %s\n", i18n.T(i18n.TrustingRemaining)); err != nil {
-						return err
-					}
-				}
-
-				if err := exec.CommandContext(ctx, "synoservice", "--disable", service).Run(); err == nil {
-					if _, err := fmt.Fprintf(os.Stdout, i18n.T(i18n.ServiceDisabled)+"\n", name); err != nil {
-						return err
-					}
-				} else {
-					if _, err := fmt.Fprintf(os.Stderr, i18n.T(i18n.ServiceFailed)+"\n", name, err); err != nil {
-						return err
-					}
-				}
-			default:
-				if _, err := fmt.Fprintf(os.Stdout, i18n.T(i18n.ServiceSkipped)+"\n", name); err != nil {
-					return err
-				}
-			}
-		} else {
-			name := strings.TrimPrefix(service, "pkgctl-")
-			if _, err := fmt.Fprintf(os.Stdout, i18n.T(i18n.ServiceAlreadyDisabled)+"\n", name); err != nil {
-				return err
-			}
+		if err := handleService(service, trusted); err != nil {
+			return err
 		}
+	}
+	return nil
+}
+
+func handleService(service string, trusted bool) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	name := strings.TrimPrefix(service, "pkgctl-")
+	if !serviceRunning(ctx, service) {
+		return printLine(os.Stdout, i18n.T(i18n.ServiceAlreadyDisabled), name)
+	}
+
+	choice := constants.ChoiceYes
+	if !trusted {
+		choice = PromptUser(fmt.Sprintf("Disable %s service", name))
+	}
+
+	switch choice {
+	case constants.ChoiceYes:
+		if err := printLine(os.Stdout, i18n.T(i18n.ServiceDisabling), name); err != nil {
+			return err
+		}
+		return disableService(ctx, service, name)
+
+	case constants.ChoiceTrust:
+		if err := printLine(os.Stdout, "  %s", i18n.T(i18n.TrustingRemaining)); err != nil {
+			return err
+		}
+		return disableService(ctx, service, name)
+
+	case constants.ChoiceNo:
+		return printLine(os.Stdout, i18n.T(i18n.ServiceSkipped), name)
 	}
 
 	return nil
+}
+
+func serviceRunning(ctx context.Context, service string) bool {
+	out, err := exec.CommandContext(ctx, "synoservice", "--status", service).Output()
+	return err == nil && strings.Contains(string(out), "start")
+}
+
+func disableService(ctx context.Context, service, name string) error {
+	if err := exec.CommandContext(ctx, "synoservice", "--disable", service).Run(); err != nil {
+		return printLine(os.Stderr, i18n.T(i18n.ServiceFailed), name, err)
+	}
+	return printLine(os.Stdout, i18n.T(i18n.ServiceDisabled), name)
 }

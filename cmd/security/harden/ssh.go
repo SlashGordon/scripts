@@ -10,6 +10,7 @@ import (
 
 	"github.com/SlashGordon/nas-manager/internal/constants"
 	"github.com/SlashGordon/nas-manager/internal/fs"
+	"github.com/SlashGordon/nas-manager/internal/utils"
 )
 
 // CheckSSHHardening checks SSH configuration
@@ -70,7 +71,7 @@ func CheckSSHHardening() []HardeningResult {
 
 // ApplySSHHardening applies SSH security hardening.
 func ApplySSHHardening() error {
-	printHeader("SSH Security Hardening")
+	utils.PrintHeader("SSH Security Hardening")
 
 	if !isSSHRunning() {
 		fmt.Fprintln(os.Stdout, "SSH service is not running. Skipping SSH hardening.")
@@ -94,11 +95,7 @@ func ApplySSHHardening() error {
 	return nil
 }
 
-// printHeader prints a section header with underline.
-func printHeader(title string) {
-	fmt.Fprintln(os.Stdout, title)
-	fmt.Fprintln(os.Stdout, strings.Repeat("=", len(title)))
-}
+
 
 // isSSHRunning checks if the SSH service is running.
 func isSSHRunning() bool {
